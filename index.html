@@ -146,7 +146,7 @@ function start(){
   document.getElementById('asof').textContent=D.asof+' 時点'+(D.prevAsof?'（前回 '+D.prevAsof+'）':'');
   var sel=document.getElementById('course');
   var order=D.courses.map(function(c,i){return {i:i,code:c[0]||'',name:c[1]||'（コース未設定）'};}).sort(function(a,b){if(!a.code!=!b.code)return a.code?-1:1;return a.code.localeCompare(b.code)||a.name.localeCompare(b.name,'ja');});
-  sel.innerHTML=order.map(function(c){return '<option value="'+c.i+'">'+esc(c.name)+(c.code?'（'+c.code+'）':'')+'</option>';}).join('');
+  sel.innerHTML=order.map(function(c){return '<option value="'+c.i+'">'+esc(c.name)+'</option>';}).join('');
   var saved=null;try{saved=localStorage.getItem('haiso_course');}catch(e){}
   var hit=order.filter(function(c){return c.code+'|'+c.name==saved;})[0];
   if(hit)sel.value=hit.i;
