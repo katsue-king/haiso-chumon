@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>配送 注文</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="配送 注文">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#e85d04">
+<style>
+  html,body{margin:0;height:100%;background:#fff;font-family:sans-serif}
+  iframe{position:fixed;top:env(safe-area-inset-top);left:0;width:100%;height:calc(100% - env(safe-area-inset-top));border:0}
+  #load{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e85d04;font-size:18px;gap:16px}
+  #load img{width:96px;height:96px;border-radius:22px}
+  #load a{color:#555;font-size:14px}
+</style>
+</head>
+<body>
+<div id="load"><img src="icon-192.png" alt=""><div>読み込み中…</div><a id="alt" href="#" style="display:none">開かないときはここを押す</a></div>
+<iframe id="app" title="配送 注文ビュー" allow="clipboard-write"></iframe>
+<script>
+  var URL_APP='https://script.google.com/macros/s/AKfycbz4bJPwPG0x3Thure02KY2F7mv_wIRsx5fx59RqccFTlve9gZiNQ2DoA7iOyYMx6Pb9/exec';
+  var f=document.getElementById('app'), a=document.getElementById('alt');
+  a.href=URL_APP;
+  f.addEventListener('load',function(){document.getElementById('load').style.display='none';});
+  f.src=URL_APP;
+  setTimeout(function(){a.style.display='block';},8000);
+</script>
+</body>
+</html>
