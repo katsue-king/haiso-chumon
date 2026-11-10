@@ -2,33 +2,219 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>配送 注文</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>配送 注文ビュー</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="配送 注文">
-<meta name="theme-color" content="#e85d04">
+<meta name="theme-color" content="#1f2328">
 <style>
-  html,body{margin:0;height:100%;font-family:sans-serif;background:#fff}
-  .box{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;box-sizing:border-box;text-align:center}
-  img{width:110px;height:110px;border-radius:24px}
-  h1{margin:0;font-size:22px;color:#333}
-  a.btn{display:block;width:100%;max-width:320px;padding:20px 0;border-radius:14px;background:#e85d04;color:#fff;font-size:22px;font-weight:bold;text-decoration:none}
-  p{margin:0;color:#666;font-size:14px;line-height:1.6}
+:root{--bg:#f5f3ee;--card:#fff;--ink:#1f2328;--sub:#6b6f76;--line:#e4e0d8;--acc:#c0392b;--acc2:#fbeae7;--chip:#efece6}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;background:var(--bg);color:var(--ink);font-size:16px}
+header{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;padding:12px 16px 0}
+header h1{margin:0;font-size:17px;font-weight:700}
+header .asof{font-size:12px;opacity:.75;margin-top:2px}
+.tabs{display:flex;gap:4px;margin-top:10px}
+.tabs button{flex:1;border:0;background:transparent;color:#fff;opacity:.6;padding:10px 0;font-size:15px;font-weight:700;border-bottom:3px solid transparent;cursor:pointer}
+.tabs button.on{opacity:1;border-bottom-color:#fff}
+main{padding:14px 14px 40px;max-width:640px;margin:0 auto}
+.notice{background:#fff8e1;border:1px solid #f0dca0;color:#6b5414;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;margin-bottom:14px}
+label.f{display:block;font-size:12px;color:var(--sub);margin:0 0 6px}
+select,input[type=search],input[type=password]{width:100%;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+.row{margin-bottom:14px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;text-align:center;cursor:pointer;min-width:58px;position:relative}
+.chip .d{font-size:16px;font-weight:700}.chip .w{font-size:11px;color:var(--sub)}
+.chip.sat .w{color:#2a62b8}.chip.sun .w{color:var(--acc)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}.chip.on .w{color:#fff}
+.chip .n{font-size:11px;color:var(--sub)}.chip.on .n{color:#ddd}
+.chip .dot{position:absolute;top:4px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.sum{display:flex;justify-content:space-between;align-items:baseline;margin:6px 2px 10px}
+.sum .t{font-size:14px;color:var(--sub)}.sum .v{font-size:26px;font-weight:800}
+.sum .v small{font-size:13px;font-weight:600;color:var(--sub);margin-left:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.card.chg{border-color:#e8b4ac;background:#fffaf9}
+.card .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.card .nm{font-weight:700;font-size:16px;line-height:1.35}
+.card .cd{font-size:11px;color:var(--sub)}
+.card .q{font-size:22px;font-weight:800;white-space:nowrap}
+.card .q small{font-size:12px;color:var(--sub);font-weight:600}
+.items{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+.it{font-size:12px;background:var(--chip);border-radius:6px;padding:2px 7px}
+.mark{display:inline-block;background:var(--acc2);color:var(--acc);font-weight:700;font-size:12px;border-radius:5px;padding:2px 7px}
+.empty{color:var(--sub);text-align:center;padding:30px 0;font-size:14px}
+.res{background:#fff;border:1px solid var(--line);border-radius:10px;margin-top:4px;max-height:260px;overflow:auto}
+.res div{padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-size:15px}
+.res div:last-child{border-bottom:0}
+.res div span{font-size:11px;color:var(--sub);margin-left:6px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;font-size:14px;vertical-align:top}
+th{background:var(--chip);font-size:12px;color:var(--sub);font-weight:600}
+td.num{text-align:right;font-weight:800;font-size:17px;white-space:nowrap}
+td .w{font-size:11px;color:var(--sub)}
+tr.sat td:first-child .w{color:#2a62b8}tr.sun td:first-child .w{color:var(--acc)}
+tr.chg td{background:#fffaf9}
+.legend{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.6}
+.chglist .card{padding:10px 12px}
+#gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:20;padding:24px}
+#gate .box{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:360px}
+#gate h2{margin:0 0 4px;font-size:18px}#gate p{margin:0 0 14px;font-size:13px;color:var(--sub);line-height:1.6}
+#gate button{width:100%;margin-top:10px;padding:13px;font-size:16px;font-weight:700;border:0;border-radius:10px;background:var(--ink);color:#fff;cursor:pointer}
+#gate button:disabled{opacity:.5}
+#gate .err{color:var(--acc);font-size:13px;min-height:18px;margin-top:6px}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-<div class="box">
-  <img src="icon-192.png" alt="">
-  <h1>配送 注文ビュー</h1>
-  <a class="btn" id="go" href="https://script.google.com/macros/s/AKfycbz4bJPwPG0x3Thure02KY2F7mv_wIRsx5fx59RqccFTlve9gZiNQ2DoA7iOyYMx6Pb9/exec">開く</a>
-  <p>自動で開かないときは「開く」を押してください</p>
-</div>
+<div id="gate"><form class="box" id="gf">
+<h2>配送 注文ビュー</h2>
+<p>合言葉を入れてください。</p>
+<input type="password" id="pw" autocomplete="current-password" placeholder="合言葉">
+<div class="err" id="ge"></div>
+<button type="submit" id="gb">入る</button>
+</form></div>
+
+<header>
+<h1>配送 注文ビュー</h1>
+<div class="asof" id="asof"></div>
+<div class="tabs"><button id="t1" class="on">コースで見る</button><button id="t2">得意先で探す</button><button id="t3">変更</button></div>
+</header>
+
+<main>
+<div class="notice">デリステーションの注文（今日から2週間先まで）を平日の朝・昼・夕に取り込んでいます。先の日付は、その時点で入っている注文だけです。<span class="mark">変更</span> は前回の取り込みから食数が変わった所です。</div>
+
+<section id="v1">
+<div class="row"><label class="f">配達コース</label><select id="course"></select></div>
+<div class="row"><label class="f">配達日</label><div class="chips" id="dchips"></div></div>
+<div class="sum"><span class="t" id="sumt"></span><span class="v" id="sumv"></span></div>
+<div id="list"></div>
+</section>
+
+<section id="v2" class="hidden">
+<div class="row"><label class="f">得意先名（数文字でOK）</label><input type="search" id="q" placeholder="例：大林、しろみず" autocomplete="off"><div class="res hidden" id="res"></div></div>
+<div id="cust"></div>
+</section>
+
+<section id="v3" class="hidden">
+<div class="legend" id="chgHead" style="margin:0 0 10px"></div>
+<div class="chglist" id="chg"></div>
+</section>
+</main>
+
 <script>
-  setTimeout(function(){ location.href = document.getElementById('go').href; }, 300);
+var D=null;
+var W=['日','月','火','水','木','金','土'];
+var dates=[],curDate=null,chgMap={};
+function pd(s){var a=s.split('/').map(Number);return new Date(a[0],a[1]-1,a[2]);}
+function lab(d){return (d.dt.getMonth()+1)+'/'+d.dt.getDate();}
+function wk(d){return W[d.dt.getDay()];}
+function cls(d){return d.dt.getDay()==6?'sat':d.dt.getDay()==0?'sun':'';}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function dByIdx(i){for(var k=0;k<dates.length;k++)if(dates[k].i==i)return dates[k];return null;}
+
+var API='https://script.google.com/macros/s/AKfycbz4bJPwPG0x3Thure02KY2F7mv_wIRsx5fx59RqccFTlve9gZiNQ2DoA7iOyYMx6Pb9/exec';
+// 合言葉
+var savedPw='';
+try{savedPw=localStorage.getItem('haiso_pw')||'';}catch(e){}
+document.getElementById('gf').addEventListener('submit',function(e){e.preventDefault();login(document.getElementById('pw').value);});
+function login(pw){
+  var b=document.getElementById('gb');b.disabled=true;b.textContent='読み込み中…';document.getElementById('ge').textContent='';
+  var url=API+'?api=data&pw='+encodeURIComponent(pw)+'&t='+Date.now();
+  fetch(url,{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){
+    b.disabled=false;b.textContent='入る';
+    if(!res.ok){document.getElementById('ge').textContent=res.error;try{localStorage.removeItem('haiso_pw');}catch(e){}return;}
+    try{localStorage.setItem('haiso_pw',pw);}catch(e){}
+    D=res.data;start();document.getElementById('gate').classList.add('hidden');
+  }).catch(function(err){
+    b.disabled=false;b.textContent='入る';document.getElementById('ge').textContent='読み込めませんでした。電波のよい所でもう一度開いてください（'+(err&&err.message||err)+'）';
+  });
+}
+document.getElementById('pw').value=savedPw;login(savedPw);
+
+// タブ
+var tabs=[['t1','v1'],['t2','v2'],['t3','v3']];
+tabs.forEach(function(t){document.getElementById(t[0]).onclick=function(){tabs.forEach(function(u){document.getElementById(u[0]).classList.toggle('on',u[0]==t[0]);document.getElementById(u[1]).classList.toggle('hidden',u[0]!=t[0]);});};});
+
+function start(){
+  dates=D.dates.map(function(s,i){return {s:s,i:i,dt:pd(s)};}).sort(function(a,b){return a.dt-b.dt;});
+  chgMap={};
+  D.changes.forEach(function(c){chgMap[c[0]+'|'+c[1]+'|'+c[2]]=c;});
+  document.getElementById('asof').textContent=D.asof+' 時点'+(D.prevAsof?'（前回 '+D.prevAsof+'）':'');
+  var sel=document.getElementById('course');
+  var order=D.courses.map(function(c,i){return {i:i,code:c[0]||'',name:c[1]||'（コース未設定）'};}).sort(function(a,b){if(!a.code!=!b.code)return a.code?-1:1;return a.code.localeCompare(b.code)||a.name.localeCompare(b.name,'ja');});
+  sel.innerHTML=order.map(function(c){return '<option value="'+c.i+'">'+esc(c.name)+(c.code?'（'+c.code+'）':'')+'</option>';}).join('');
+  var saved=null;try{saved=localStorage.getItem('haiso_course');}catch(e){}
+  var hit=order.filter(function(c){return c.code+'|'+c.name==saved;})[0];
+  if(hit)sel.value=hit.i;
+  sel.onchange=function(){try{var c=D.courses[+sel.value];localStorage.setItem('haiso_course',c[0]+'|'+c[1]);}catch(e){}renderChips();renderList();};
+  curDate=dates.length?dates[0].i:null;
+  renderChips();renderList();renderChanges();
+}
+
+function courseTotals(ci){var t={};D.rows.forEach(function(r){if(r[1]==ci)t[r[0]]=(t[r[0]]||0)+r[4];});return t;}
+function courseChgDates(ci){var t={};D.changes.forEach(function(c){if(c[5]==ci)t[c[0]]=1;});return t;}
+function renderChips(){
+  var ci=+document.getElementById('course').value,t=courseTotals(ci),cd=courseChgDates(ci);
+  if(!(curDate in t)&&!(curDate in cd)){var f=dates.filter(function(d){return t[d.i]||cd[d.i];})[0];if(f)curDate=f.i;}
+  document.getElementById('dchips').innerHTML=dates.map(function(d){
+    return '<div class="chip '+cls(d)+' '+(d.i==curDate?'on':'')+'" data-i="'+d.i+'">'+(cd[d.i]?'<span class="dot"></span>':'')+'<div class="d">'+lab(d)+'</div><div class="w">'+wk(d)+'</div><div class="n">'+(t[d.i]?t[d.i]+'食':'—')+'</div></div>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#dchips .chip'),function(el){el.onclick=function(){curDate=+el.dataset.i;renderChips();renderList();};});
+  var on=document.querySelector('#dchips .chip.on');if(on)on.scrollIntoView({block:'nearest',inline:'center'});
+}
+function renderList(){
+  var ci=+document.getElementById('course').value,by={};
+  D.rows.forEach(function(r){if(r[1]==ci&&r[0]==curDate){var b=by[r[2]]=by[r[2]]||{q:0,it:{}};b.q+=r[4];b.it[r[3]]=(b.it[r[3]]||0)+r[4];}});
+  D.changes.forEach(function(c){if(c[5]==ci&&c[0]==curDate&&!by[c[1]])by[c[1]]={q:0,it:{}};});
+  var keys=Object.keys(by).sort(function(a,b){return D.custs[a][0].localeCompare(D.custs[b][0],'ja',{numeric:true});});
+  var tot=keys.reduce(function(s,k){return s+by[k].q;},0);
+  var d=dByIdx(curDate);
+  document.getElementById('sumt').textContent=d?lab(d)+'('+wk(d)+')　'+keys.filter(function(k){return by[k].q>0;}).length+'件':'';
+  document.getElementById('sumv').innerHTML=tot+'<small>食</small>';
+  document.getElementById('list').innerHTML=keys.length?keys.map(function(k){
+    var c=D.custs[k],b=by[k],marks=[];
+    D.changes.forEach(function(x){if(x[0]==curDate&&x[1]==k)marks.push('<span class="mark">変更 '+esc(D.prods[x[2]])+' '+x[3]+'→'+x[4]+'</span>');});
+    var items=Object.keys(b.it).map(function(p){return '<span class="it">'+esc(D.prods[p])+' '+b.it[p]+'</span>';}).join('');
+    return '<div class="card'+(marks.length?' chg':'')+'"><div class="top"><div><div class="nm">'+esc(c[1])+'</div><div class="cd">'+esc(c[0])+'</div></div><div class="q">'+b.q+'<small>食</small></div></div><div class="items">'+items+marks.join('')+'</div></div>';
+  }).join(''):'<div class="empty">この日の注文は入っていません</div>';
+}
+
+// 得意先検索
+var q=document.getElementById('q'),res=document.getElementById('res');
+function norm(s){return String(s).normalize('NFKC').toLowerCase();}
+q.addEventListener('input',function(){
+  if(!D)return;var v=norm(q.value.trim());if(!v){res.classList.add('hidden');return;}
+  var hit=D.custs.map(function(c,i){return {c:c,i:i};}).filter(function(x){return norm(x.c[1]).indexOf(v)>=0||x.c[0].indexOf(v)>=0;}).slice(0,30);
+  res.innerHTML=hit.length?hit.map(function(h){return '<div data-i="'+h.i+'">'+esc(h.c[1])+'<span>'+esc(h.c[0])+'</span></div>';}).join(''):'<div style="cursor:default;color:#6b6f76">見つかりません</div>';
+  res.classList.remove('hidden');
+  Array.prototype.forEach.call(res.querySelectorAll('div[data-i]'),function(el){el.onclick=function(){res.classList.add('hidden');q.value=D.custs[+el.dataset.i][1];showCust(+el.dataset.i);};});
+});
+function showCust(ki){
+  var c=D.custs[ki],by={},cs={};
+  D.rows.forEach(function(r){if(r[2]==ki){var b=by[r[0]]=by[r[0]]||{q:0,it:{}};b.q+=r[4];b.it[r[3]]=(b.it[r[3]]||0)+r[4];cs[D.courses[r[1]][1]]=1;}});
+  var rows=dates.map(function(d){
+    var b=by[d.i],marks=[];
+    D.changes.forEach(function(x){if(x[0]==d.i&&x[1]==ki)marks.push('<span class="mark">変更 '+esc(D.prods[x[2]])+' '+x[3]+'→'+x[4]+'</span>');});
+    var items=b?Object.keys(b.it).map(function(p){return '<span class="it">'+esc(D.prods[p])+' '+b.it[p]+'</span>';}).join(' '):'<span class="w">注文なし</span>';
+    return '<tr class="'+cls(d)+(marks.length?' chg':'')+'"><td>'+lab(d)+' <span class="w">'+wk(d)+'</span></td><td>'+items+' '+marks.join(' ')+'</td><td class="num">'+(b?b.q:'—')+'</td></tr>';
+  }).join('');
+  document.getElementById('cust').innerHTML='<div class="card"><div class="nm">'+esc(c[1])+'</div><div class="cd">'+esc(c[0])+'　'+Object.keys(cs).map(esc).join('・')+'</div></div><table><thead><tr><th>配達日</th><th>内訳</th><th style="text-align:right">食数</th></tr></thead><tbody>'+rows+'</tbody></table><div class="legend">先の日付は、'+esc(D.asof)+'の時点で入っている注文です。</div>';
+}
+
+// 変更の一覧
+function renderChanges(){
+  document.getElementById('chgHead').textContent=D.prevAsof?(D.prevAsof+' → '+D.asof+' で変わった注文：'+D.changes.length+'件'):'比べる前回のデータがまだありません';
+  var list=D.changes.slice().sort(function(a,b){var da=D.dates[a[0]],db=D.dates[b[0]];return da<db?-1:da>db?1:a[5]-b[5];});
+  document.getElementById('t3').textContent='変更'+(D.changes.length?'（'+D.changes.length+'）':'');
+  document.getElementById('chg').innerHTML=list.length?list.map(function(x){
+    var d={dt:pd(D.dates[x[0]])},co=x[5]>=0?D.courses[x[5]][1]:'';
+    return '<div class="card chg"><div class="top"><div><div class="nm">'+esc(D.custs[x[1]][1])+'</div><div class="cd">'+lab(d)+'('+wk(d)+')　'+esc(co)+'</div></div><div><span class="mark">'+esc(D.prods[x[2]])+' '+x[3]+'→'+x[4]+'</span></div></div></div>';
+  }).join(''):'<div class="empty">変更はありません</div>';
+}
 </script>
 </body>
 </html>
