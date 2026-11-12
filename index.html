@@ -60,23 +60,21 @@ tr.sat td:first-child .w{color:#2a62b8}tr.sun td:first-child .w{color:var(--acc)
 tr.chg td{background:#fffaf9}
 .legend{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.6}
 .chglist .card{padding:10px 12px}
-#gate{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:20;padding:24px}
-#gate .box{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:360px}
-#gate h2{margin:0 0 4px;font-size:18px}#gate p{margin:0 0 14px;font-size:13px;color:var(--sub);line-height:1.6}
-#gate button{width:100%;margin-top:10px;padding:13px;font-size:16px;font-weight:700;border:0;border-radius:10px;background:var(--ink);color:#fff;cursor:pointer}
-#gate button:disabled{opacity:.5}
-#gate .err{color:var(--acc);font-size:13px;min-height:18px;margin-top:6px}
+#load{text-align:center;color:var(--sub);padding:40px 0;font-size:14px}
+#load .err{color:var(--acc);margin-top:8px;line-height:1.6}
+#load button{margin-top:12px;padding:11px 22px;font-size:15px;font-weight:700;border:0;border-radius:10px;background:var(--ink);color:#fff}
+h3.sec{font-size:15px;margin:22px 2px 8px}
+table.hist{table-layout:fixed}
+table.hist th,table.hist td{padding:7px 2px;text-align:center;font-size:14px;border-left:1px solid var(--line)}
+table.hist th:first-child,table.hist td:first-child{border-left:0;font-size:11px;color:var(--sub);width:44px}
+table.hist td.z{color:#c8c4bb}
+table.hist tr.avg td{background:var(--chip);font-weight:800}
+table.hist th.sat{color:#2a62b8}table.hist th.sun{color:var(--acc)}
 .hidden{display:none!important}
 </style>
 </head>
 <body>
-<div id="gate"><form class="box" id="gf">
-<h2>配送 注文ビュー</h2>
-<p>合言葉を入れてください。</p>
-<input type="password" id="pw" autocomplete="current-password" placeholder="合言葉">
-<div class="err" id="ge"></div>
-<button type="submit" id="gb">入る</button>
-</form></div>
+
 
 <header>
 <h1>配送 注文ビュー</h1>
@@ -85,9 +83,10 @@ tr.chg td{background:#fffaf9}
 </header>
 
 <main>
-<div class="notice">デリステーションの注文（今日から2週間先まで）を平日の朝・昼・夕に取り込んでいます。先の日付は、その時点で入っている注文だけです。<span class="mark">変更</span> は前回の取り込みから食数が変わった所です。</div>
+<div id="load">読み込み中…</div>
+<div class="notice">デリステーションの注文（今日から2週間先まで）を平日の朝・昼・夕に取り込んでいます。得意先で探すと、これまでの注文も曜日ごとに見られます。先の日付は、その時点で入っている注文だけです。<span class="mark">変更</span> は前回の取り込みから食数が変わった所です。</div>
 
-<section id="v1">
+<section id="v1" class="hidden">
 <div class="row"><label class="f">配達コース</label><select id="course"></select></div>
 <div class="row"><label class="f">配達日</label><div class="chips" id="dchips"></div></div>
 <div class="sum"><span class="t" id="sumt"></span><span class="v" id="sumv"></span></div>
@@ -117,27 +116,21 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp
 function dByIdx(i){for(var k=0;k<dates.length;k++)if(dates[k].i==i)return dates[k];return null;}
 
 var API='https://script.google.com/macros/s/AKfycbz4bJPwPG0x3Thure02KY2F7mv_wIRsx5fx59RqccFTlve9gZiNQ2DoA7iOyYMx6Pb9/exec';
-// 合言葉
-var savedPw='';
-try{savedPw=localStorage.getItem('haiso_pw')||'';}catch(e){}
-document.getElementById('gf').addEventListener('submit',function(e){e.preventDefault();login(document.getElementById('pw').value);});
-function login(pw){
-  var b=document.getElementById('gb');b.disabled=true;b.textContent='読み込み中…';document.getElementById('ge').textContent='';
-  var url=API+'?api=data&pw='+encodeURIComponent(pw)+'&t='+Date.now();
-  fetch(url,{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){
-    b.disabled=false;b.textContent='入る';
-    if(!res.ok){document.getElementById('ge').textContent=res.error;try{localStorage.removeItem('haiso_pw');}catch(e){}return;}
-    try{localStorage.setItem('haiso_pw',pw);}catch(e){}
-    D=res.data;start();document.getElementById('gate').classList.add('hidden');
+// データを読む（合言葉なし）
+function load(){
+  var L=document.getElementById('load');L.innerHTML='読み込み中…';L.classList.remove('hidden');
+  fetch(API+'?api=data&t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){
+    if(!res.ok)throw new Error(res.error);
+    D=res.data;L.classList.add('hidden');document.getElementById('v1').classList.remove('hidden');start();
   }).catch(function(err){
-    b.disabled=false;b.textContent='入る';document.getElementById('ge').textContent='読み込めませんでした。電波のよい所でもう一度開いてください（'+(err&&err.message||err)+'）';
+    L.innerHTML='<div class="err">読み込めませんでした。電波のよい所でもう一度開いてください。<br>（'+esc(err&&err.message||err)+'）</div><button onclick="load()">もう一度読む</button>';
   });
 }
-document.getElementById('pw').value=savedPw;login(savedPw);
+load();
 
 // タブ
 var tabs=[['t1','v1'],['t2','v2'],['t3','v3']];
-tabs.forEach(function(t){document.getElementById(t[0]).onclick=function(){tabs.forEach(function(u){document.getElementById(u[0]).classList.toggle('on',u[0]==t[0]);document.getElementById(u[1]).classList.toggle('hidden',u[0]!=t[0]);});};});
+tabs.forEach(function(t){document.getElementById(t[0]).onclick=function(){tabs.forEach(function(u){document.getElementById(u[0]).classList.toggle('on',u[0]==t[0]);if(D)document.getElementById(u[1]).classList.toggle('hidden',u[0]!=t[0]);});};});
 
 function start(){
   dates=D.dates.map(function(s,i){return {s:s,i:i,dt:pd(s)};}).sort(function(a,b){return a.dt-b.dt;});
@@ -202,7 +195,47 @@ function showCust(ki){
     var items=b?Object.keys(b.it).map(function(p){return '<span class="it">'+esc(D.prods[p])+' '+b.it[p]+'</span>';}).join(' '):'<span class="w">注文なし</span>';
     return '<tr class="'+cls(d)+(marks.length?' chg':'')+'"><td>'+lab(d)+' <span class="w">'+wk(d)+'</span></td><td>'+items+' '+marks.join(' ')+'</td><td class="num">'+(b?b.q:'—')+'</td></tr>';
   }).join('');
-  document.getElementById('cust').innerHTML='<div class="card"><div class="nm">'+esc(c[1])+'</div><div class="cd">'+esc(c[0])+'　'+Object.keys(cs).map(esc).join('・')+'</div></div><table><thead><tr><th>配達日</th><th>内訳</th><th style="text-align:right">食数</th></tr></thead><tbody>'+rows+'</tbody></table><div class="legend">先の日付は、'+esc(D.asof)+'の時点で入っている注文です。</div>';
+  document.getElementById('cust').innerHTML='<div class="card"><div class="nm">'+esc(c[1])+'</div><div class="cd">'+esc(c[0])+'　'+Object.keys(cs).map(esc).join('・')+'</div></div><table><thead><tr><th>配達日</th><th>内訳</th><th style="text-align:right">食数</th></tr></thead><tbody>'+rows+'</tbody></table><div class="legend">先の日付は、'+esc(D.asof)+'の時点で入っている注文です。</div><h3 class="sec">これまでの注文（曜日ごと）</h3><div id="hist"><div class="empty">読み込み中…</div></div>';
+  loadHist(c[0]);
+}
+// 過去の注文（曜日ごと）
+var histReq=0;
+function loadHist(code){
+  var my=++histReq,box=document.getElementById('hist');
+  fetch(API+'?api=hist&cust='+encodeURIComponent(code)+'&t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){
+    if(my!==histReq)return;
+    if(!res.ok)throw new Error(res.error);
+    box.innerHTML=histTable(res);
+  }).catch(function(err){
+    if(my!==histReq)return;
+    box.innerHTML='<div class="empty">読み込めませんでした（'+esc(err&&err.message||err)+'）</div>';
+  });
+}
+function histTable(h){
+  if(!h.dates.length)return '<div class="empty">過去の記録がまだありません</div>';
+  var map={};h.dates.forEach(function(s,i){map[s]=h.q[i];});
+  var first=pd(h.from),last=pd(h.to);
+  // 曜日の列：月〜土。日曜は注文があるときだけ
+  var cols=[1,2,3,4,5,6];if(h.dates.some(function(s,i){return pd(s).getDay()==0&&h.q[i]>0;}))cols.push(0);
+  // 週（月曜はじまり）の行。新しい週が上
+  var mon=new Date(last);mon.setDate(mon.getDate()-((mon.getDay()+6)%7));
+  var weeks=[],sum={},cnt={},sum4={},cnt4={};
+  for(var w=0;mon>=new Date(first.getFullYear(),first.getMonth(),first.getDate()-6);w++){
+    var cells=cols.map(function(dw){
+      var d=new Date(mon);d.setDate(d.getDate()+((dw+6)%7));
+      var k=d.getFullYear()+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2);
+      if(d<first||d>last)return '<td class="z"></td>';
+      var v=map[k]||0;
+      if(v>0){sum[dw]=(sum[dw]||0)+v;cnt[dw]=(cnt[dw]||0)+1;if(w<4){sum4[dw]=(sum4[dw]||0)+v;cnt4[dw]=(cnt4[dw]||0)+1;}}
+      return v>0?'<td>'+v+'</td>':'<td class="z">・</td>';
+    }).join('');
+    weeks.push('<tr><td>'+(mon.getMonth()+1)+'/'+mon.getDate()+'〜</td>'+cells+'</tr>');
+    mon=new Date(mon);mon.setDate(mon.getDate()-7);
+  }
+  function avg(s,c){return cols.map(function(dw){return '<td>'+(c[dw]?Math.round(s[dw]/c[dw]*10)/10:'—')+'</td>';}).join('');}
+  var head='<tr><th>週</th>'+cols.map(function(dw){return '<th class="'+(dw==6?'sat':dw==0?'sun':'')+'">'+W[dw]+'</th>';}).join('')+'</tr>';
+  return '<table class="hist"><thead>'+head+'</thead><tbody><tr class="avg"><td>平均</td>'+avg(sum,cnt)+'</tr><tr class="avg"><td>直近4週</td>'+avg(sum4,cnt4)+'</tr>'+weeks.join('')+'</tbody></table>'+
+    '<div class="legend">'+esc(h.from)+'〜'+esc(h.to)+' の配達日の食数（その日の最後の取り込み時点）。「・」は注文なし。平均は注文があった日だけで出しています。</div>';
 }
 
 // 変更の一覧
