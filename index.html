@@ -121,7 +121,7 @@ function load(){
   var L=document.getElementById('load');L.innerHTML='読み込み中…';L.classList.remove('hidden');
   fetch(API+'?api=data&t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){
     if(!res.ok)throw new Error(res.error);
-    D=res.data;L.classList.add('hidden');document.getElementById('v1').classList.remove('hidden');start();
+    D=res.data;L.classList.add('hidden');document.getElementById('v1').classList.remove('hidden');start();loadAllCusts();
   }).catch(function(err){
     L.innerHTML='<div class="err">読み込めませんでした。電波のよい所でもう一度開いてください。<br>（'+esc(err&&err.message||err)+'）</div><button onclick="load()">もう一度読む</button>';
   });
@@ -181,13 +181,25 @@ var q=document.getElementById('q'),res=document.getElementById('res');
 function norm(s){return String(s).normalize('NFKC').toLowerCase();}
 q.addEventListener('input',function(){
   if(!D)return;var v=norm(q.value.trim());if(!v){res.classList.add('hidden');return;}
-  var hit=D.custs.map(function(c,i){return {c:c,i:i};}).filter(function(x){return norm(x.c[1]).indexOf(v)>=0||x.c[0].indexOf(v)>=0;}).slice(0,30);
-  res.innerHTML=hit.length?hit.map(function(h){return '<div data-i="'+h.i+'">'+esc(h.c[1])+'<span>'+esc(h.c[0])+'</span></div>';}).join(''):'<div style="cursor:default;color:#6b6f76">見つかりません</div>';
+  var hit=allCusts().filter(function(c){return norm(c[1]).indexOf(v)>=0||c[0].indexOf(v)>=0;}).slice(0,30);
+  res.innerHTML=hit.length?hit.map(function(c,i){return '<div data-i="'+i+'">'+esc(c[1])+'<span>'+esc(c[0])+'</span></div>';}).join(''):'<div style="cursor:default;color:#6b6f76">'+(ALLC?'見つかりません':'見つかりません（過去の得意先を読み込み中です。少し待ってもう一度）')+'</div>';
   res.classList.remove('hidden');
-  Array.prototype.forEach.call(res.querySelectorAll('div[data-i]'),function(el){el.onclick=function(){res.classList.add('hidden');q.value=D.custs[+el.dataset.i][1];showCust(+el.dataset.i);};});
+  Array.prototype.forEach.call(res.querySelectorAll('div[data-i]'),function(el){el.onclick=function(){var c=hit[+el.dataset.i];res.classList.add('hidden');q.value=c[1];showCust(c[0],c[1]);};});
 });
-function showCust(ki){
-  var c=D.custs[ki],by={},cs={};
+// 先々の注文がある得意先＋過去3か月に注文があった得意先（先々の注文がまだ入っていない得意先も探せるように）
+var ALLC=null;
+function loadAllCusts(){
+  fetch(API+'?api=custs&t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){if(res.ok)ALLC=res.custs;}).catch(function(){});
+}
+function allCusts(){
+  var seen={},out=[];
+  D.custs.forEach(function(c){if(!seen[c[0]]){seen[c[0]]=1;out.push(c);}});
+  (ALLC||[]).forEach(function(c){if(!seen[c[0]]){seen[c[0]]=1;out.push(c);}});
+  return out;
+}
+function showCust(code,name){
+  var ki=-1;D.custs.forEach(function(c,i){if(c[0]===code)ki=i;});
+  var c=ki>=0?D.custs[ki]:[code,name],by={},cs={};
   D.rows.forEach(function(r){if(r[2]==ki){var b=by[r[0]]=by[r[0]]||{q:0,it:{}};b.q+=r[4];b.it[r[3]]=(b.it[r[3]]||0)+r[4];cs[D.courses[r[1]][1]]=1;}});
   var rows=dates.map(function(d){
     var b=by[d.i],marks=[];
