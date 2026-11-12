@@ -70,6 +70,7 @@ table.hist th:first-child,table.hist td:first-child{border-left:0;font-size:11px
 table.hist td.z{color:#c8c4bb}
 table.hist tr.avg td{background:var(--chip);font-weight:800}
 table.hist th.sat{color:#2a62b8}table.hist th.sun{color:var(--acc)}
+.two{display:flex;gap:8px}.two>div{flex:1;min-width:0}
 .hidden{display:none!important}
 </style>
 </head>
@@ -94,7 +95,8 @@ table.hist th.sat{color:#2a62b8}table.hist th.sun{color:var(--acc)}
 </section>
 
 <section id="v2" class="hidden">
-<div class="row"><label class="f">得意先名（数文字でOK）</label><input type="search" id="q" placeholder="例：大林、しろみず" autocomplete="off"><div class="res hidden" id="res"></div></div>
+<div class="row two"><div><label class="f">コースで選ぶ</label><select id="hc"></select></div><div><label class="f">得意先</label><select id="hk"></select></div></div>
+<div class="row"><label class="f">または得意先名で探す（数文字でOK）</label><input type="search" id="q" placeholder="例：大林、しろみず" autocomplete="off"><div class="res hidden" id="res"></div></div>
 <div id="cust"></div>
 </section>
 
@@ -145,7 +147,7 @@ function start(){
   if(hit)sel.value=hit.i;
   sel.onchange=function(){try{var c=D.courses[+sel.value];localStorage.setItem('haiso_course',c[0]+'|'+c[1]);}catch(e){}renderChips();renderList();};
   curDate=dates.length?dates[0].i:null;
-  renderChips();renderList();renderChanges();
+  renderChips();renderList();renderChanges();renderHistCourse();
 }
 
 function courseTotals(ci){var t={};D.rows.forEach(function(r){if(r[1]==ci)t[r[0]]=(t[r[0]]||0)+r[4];});return t;}
@@ -189,7 +191,32 @@ q.addEventListener('input',function(){
 // 先々の注文がある得意先＋過去3か月に注文があった得意先（先々の注文がまだ入っていない得意先も探せるように）
 var ALLC=null;
 function loadAllCusts(){
-  fetch(API+'?api=custs&t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){if(res.ok)ALLC=res.custs;}).catch(function(){});
+  fetch(API+'?api=custs&t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(res){if(res.ok){ALLC=res.custs;renderHistCourse();}}).catch(function(){});
+}
+// コース → 得意先のプルダウン（先々の注文のコース＋過去の注文のコース）
+function courseMapAll(){
+  var m={};
+  function add(cd,nm,code,name){if(!code)return;var k=(cd||'')+'|'+(nm||'');var c=m[k]=m[k]||{cd:cd||'',name:nm||'（コース未設定）',custs:{}};if(!c.custs[code])c.custs[code]=name;}
+  D.rows.forEach(function(r){var co=D.courses[r[1]],cu=D.custs[r[2]];add(co[0],co[1],cu[0],cu[1]);});
+  (ALLC||[]).forEach(function(c){add(c[2],c[3],c[0],c[1]);});
+  return m;
+}
+function renderHistCourse(){
+  if(!D)return;
+  var hc=document.getElementById('hc'),hk=document.getElementById('hk'),m=courseMapAll(),cur=hc.value;
+  var keys=Object.keys(m).sort(function(a,b){var x=m[a],y=m[b];if(!x.cd!=!y.cd)return x.cd?-1:1;return x.cd.localeCompare(y.cd)||x.name.localeCompare(y.name,'ja');});
+  if(!cur){try{cur=localStorage.getItem('haiso_course')||'';}catch(e){}}
+  hc.innerHTML='<option value="">コースを選ぶ</option>'+keys.map(function(k){return '<option value="'+esc(k)+'">'+esc(m[k].name)+'</option>';}).join('');
+  if(m[cur])hc.value=cur;
+  function fillK(){
+    var c=m[hc.value];
+    if(!c){hk.innerHTML='<option value="">先にコースを選ぶ</option>';return;}
+    var codes=Object.keys(c.custs).sort(function(a,b){return a.localeCompare(b,'ja',{numeric:true});});
+    hk.innerHTML='<option value="">得意先を選ぶ（'+codes.length+'件）</option>'+codes.map(function(code){return '<option value="'+esc(code)+'">'+esc(c.custs[code])+'</option>';}).join('');
+  }
+  hc.onchange=fillK;
+  hk.onchange=function(){var c=m[hc.value];if(!c||!hk.value)return;var name=c.custs[hk.value];document.getElementById('q').value='';document.getElementById('res').classList.add('hidden');showCust(hk.value,name);};
+  var keep=hk.value;fillK();if(keep)hk.value=keep;
 }
 function allCusts(){
   var seen={},out=[];
