@@ -22,6 +22,7 @@ header .asof{font-size:12px;opacity:.75;margin-top:2px}
 .tabs button{flex:1;border:0;background:transparent;color:#fff;opacity:.6;padding:10px 0;font-size:15px;font-weight:700;border-bottom:3px solid transparent;cursor:pointer}
 .tabs button.on{opacity:1;border-bottom-color:#fff}
 main{padding:14px 14px 40px;max-width:640px;margin:0 auto}
+.stale{background:#fdecea;border:2px solid #d93025;color:#b3261e;border-radius:10px;padding:10px 12px;font-size:14px;font-weight:700;line-height:1.6;margin-bottom:14px}
 .notice{background:#fff8e1;border:1px solid #f0dca0;color:#6b5414;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.6;margin-bottom:14px}
 label.f{display:block;font-size:12px;color:var(--sub);margin:0 0 6px}
 select,input[type=search],input[type=password]{width:100%;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
@@ -85,6 +86,7 @@ table.hist th.sat{color:#2a62b8}table.hist th.sun{color:var(--acc)}
 
 <main>
 <div id="load">読み込み中…</div>
+<div id="stale" class="stale hidden"></div>
 <div class="notice">デリステーションの注文（明日から2週間先まで）を平日の朝・昼・夕に取り込んでいます。当日の分はデリのスマホ画面で見てください（ここでは「これまでの注文」に入ります）。得意先で探すと、これまでの注文も曜日ごとに見られます。先の日付は、その時点で入っている注文だけです。<span class="mark">変更</span> は前回の取り込みから食数が変わった所です。</div>
 
 <section id="v1" class="hidden">
@@ -128,6 +130,8 @@ function load(){
     L.innerHTML='<div class="err">読み込めませんでした。電波のよい所でもう一度開いてください。<br>（'+esc(err&&err.message||err)+'）</div><button onclick="load()">もう一度読む</button>';
   });
 }
+// 取り込みが止まっていたら赤い注意を出す（平日6時・12時・16時の取り込みから50分たっても新しくなっていないとき）
+function staleCheck(){var el=document.getElementById('stale');var m=/(\d{4})\/(\d{2})\/(\d{2}) (\d{2}):(\d{2})/.exec((D&&D.asof)||'');if(!m)return;var a=new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5]);var now=new Date();var exp=null;for(var i=0;i<8&&!exp;i++){var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);var w=d.getDay();if(w==0||w==6)continue;[16,12,6].some(function(h){var t=new Date(d.getFullYear(),d.getMonth(),d.getDate(),h,0);if(now-t>=50*60000){exp=t;return true;}return false;});}if(exp&&a<exp){el.textContent='⚠ 古いデータです。最後に取り込めたのは '+D.asof+' です。そのあとの注文の変更は入っていません。デリの画面で確かめてください。';el.classList.remove('hidden');}else{el.classList.add('hidden');}}
 load();
 
 // タブ
@@ -138,7 +142,7 @@ function start(){
   dates=D.dates.map(function(s,i){return {s:s,i:i,dt:pd(s)};}).sort(function(a,b){return a.dt-b.dt;});
   chgMap={};
   D.changes.forEach(function(c){chgMap[c[0]+'|'+c[1]+'|'+c[2]]=c;});
-  document.getElementById('asof').textContent=D.asof+' 時点'+(D.prevAsof?'（前回 '+D.prevAsof+'）':'');
+  staleCheck();document.getElementById('asof').textContent='最終更新 '+D.asof+(D.prevAsof?'（前回 '+D.prevAsof+'）':'');
   var sel=document.getElementById('course');
   var order=D.courses.map(function(c,i){return {i:i,code:c[0]||'',name:c[1]||'（コース未設定）'};}).sort(function(a,b){if(!a.code!=!b.code)return a.code?-1:1;return a.code.localeCompare(b.code)||a.name.localeCompare(b.name,'ja');});
   sel.innerHTML=order.map(function(c){return '<option value="'+c.i+'">'+esc(c.name)+'</option>';}).join('');
